@@ -1,49 +1,77 @@
-// Create we server
-// 1. Load express
-// 2. Load body-parser
-// 3. Create express app
-// 4. Load the comments data
-// 5. Create an endpoint to get all comments
-// 6. Create an endpoint to add a new comment
-// 7. Create an endpoint to delete a comment
-// 8. Start the server
+// Create web server
+// 1. Load modules
+// 2. Create web server
+// 3. Listen to requests
+// 4. Read file
+// 5. Write file
+// 6. Delete file
+// 7. Update file
+// 8. Add comment
+// 9. Delete comment
+// 10. Update comment
 
-// 1. Load express
+// 1. Load modules
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
-
-// 2. Load body-parser
 const bodyParser = require('body-parser');
 
-// 3. Create express app
+// 2. Create web server
 const app = express();
+const port = 3000;
 
-// 4. Load the comments data
-const comments = require('./data/comments');
+// 3. Listen to requests
+app.listen(port, () => {
+    console.log(`Server is listening at http://localhost:${port}`);
+});
 
-// 5. Create an endpoint to get all comments
+// 4. Read file
 app.get('/comments', (req, res) => {
-    res.json(comments);
+    fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
+        if (err) {
+            res.status(500).send('Error reading file');
+            return;
+        }
+
+        res.json(JSON.parse(data));
+    });
 });
 
-// 6. Create an endpoint to add a new comment
+// 5. Write file
 app.post('/comments', bodyParser.json(), (req, res) => {
-    const newComment = req.body;
-    newComment.id = comments.length + 1;
-    comments.push(newComment);
-    res.json(newComment);
+    fs.writeFile(path.join(__dirname, 'comments.json'), JSON.stringify(req.body), (err) => {
+        if (err) {
+            res.status(500).send('Error writing file');
+            return;
+        }
+
+        res.send('File written');
+    });
 });
 
-// 7. Create an endpoint to delete a comment
-app.delete('/comments/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const index = comments.findIndex(comment => comment.id === id);
-    if (index > -1) {
-        comments.splice(index, 1);
-    }
-    res.json({ message: 'Comment deleted' });
+// 6. Delete file
+app.delete('/comments', (req, res) => {
+    fs.unlink(path.join(__dirname, 'comments.json'), (err) => {
+        if (err) {
+            res.status(500).send('Error deleting file');
+            return;
+        }
+
+        res.send('File deleted');
+    });
 });
 
-// 8. Start the server
-app.listen(3000, () => {
-    console.log('Server started');
-});
+// 7. Update file
+app.put('/comments', bodyParser.json(), (req, res) => {
+    fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
+        if (err) {
+            res.status(500).send('Error reading file');
+            return;
+        }
+
+        const comments = JSON.parse(data);
+        comments.push(req.body);
+
+        fs.writeFile(path.join(__dirname, 'comments.json'), JSON.stringify(comments), (err) => {
+            if (err) {
+                res.status(500).send('
